@@ -4,6 +4,18 @@
 
 Skill Verifier runs agent skill tests in isolated environments and generates verifiable attestations of the results. Built with Docker isolation and designed for TEE (Trusted Execution Environment) integration.
 
+**📺 [See Live Demo](DEMO.md)** - Hermes skill fully verified with all tests passing!
+
+## Live Example
+
+```bash
+✅ Hermes Skill Verified
+   Duration: 2.2s | Tests: 6/6 passed | Security: Isolated
+   Attestation: 0xfb41b44477e21bb3de59dfc1fc874191...
+```
+
+See [DEMO.md](DEMO.md) for full verification output.
+
 ## Features
 
 - 🔒 **Isolated Execution** - Each skill runs in its own Docker container
