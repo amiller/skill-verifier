@@ -1,307 +1,343 @@
-# Skill Verifier
+# Inspection Certificates
 
-> Verify agent skills in isolated Docker containers with cryptographic attestations
+> Verifiable proof of ephemeral execution - for skills AND data
 
-Skill Verifier runs agent skill tests in isolated environments and generates verifiable attestations of the results. Built with Docker isolation and designed for TEE (Trusted Execution Environment) integration.
+**Inspection Certificates** provide cryptographic proof that a computation happened without storing sensitive inputs. Two main use cases:
 
-**📺 [See Live Demo](DEMO.md)** - Hermes skill fully verified with all tests passing!
+1. **Skill Verification** - Prove agent skills work correctly
+2. **Data Inspection** - Prove claims about private datasets
 
-## Live Example
-
-```bash
-✅ Hermes Skill Verified
-   Duration: 2.2s | Tests: 6/6 passed | Security: Isolated
-   Attestation: 0xfb41b44477e21bb3de59dfc1fc874191...
-```
-
-See [DEMO.md](DEMO.md) for full verification output.
-
-## Features
-
-- 🔒 **Isolated Execution** - Each skill runs in its own Docker container
-- 🧪 **Language Agnostic** - Supports any runtime (Node, Python, Rust, etc.)
-- 📊 **Detailed Results** - Captures stdout, stderr, exit codes, and timing
-- 🔐 **Attestations** - Cryptographic proof of verification (TEE-ready)
-- 🚀 **REST API** - Easy integration via HTTP
-- 📦 **Simple Manifest** - Skills defined in SKILL.md frontmatter
+Both use the same ephemeral execution model: load input → run computation → delete input → keep certificate.
 
 ## Quick Start
 
-### Installation
+### Skill Verification (Docker)
+```bash
+# Verify a skill works
+POST /verify
+{
+  "skillUrl": "https://example.com/skill.md"
+}
+
+# Certificate proves: tests passed, timing, attestation
+```
+
+📖 **[Skill Verification Docs](DEMO.md)**
+
+### Data Inspection (GitHub Actions)
+```bash
+# Inspect private data
+workflow_dispatch:
+  inputs:
+    dataset_secret: "PRIVATE_DATASET"
+    inspection_prompt: "Analyze for X"
+
+# Certificate proves: data was analyzed, result is authentic
+```
+
+📖 **[Data Inspection Quick Start](docs/data-inspection/GITHUB-ACTIONS-QUICKSTART.md)**
+
+## Concept
+
+**Inspection = Verify properties without full exposure**
+
+Like a pre-buy inspection:
+- Home inspection before buying (without revealing all details)
+- Car inspection (without test driving for weeks)
+- Dataset inspection (without seeing all records)
+
+**Certificate = Verifiable proof**
+
+- Public, shareable URL
+- Anyone can verify
+- Tamper-proof logs
+- Cryptographic attestation (TEE mode)
+
+## Use Cases
+
+### 1. Skill Verification (Original)
+
+**Claim:** "This Hermes skill works correctly"
+
+**Inspection:**
+- Load skill code
+- Run test suite in Docker
+- Generate attestation
+- Delete skill code
+
+**Certificate:**
+```
+✅ Hermes Skill Verified
+   Duration: 2.2s
+   Tests: 6/6 passed
+   Attestation: 0xfb41b44...
+```
+
+### 2. Data Inspection (New)
+
+**Claim:** "I have 5,000 support tickets about refunds"
+
+**Inspection:**
+- Load private dataset (from GitHub Secret)
+- Run LLM analysis
+- Generate certificate
+- Delete dataset
+
+**Certificate:**
+```
+✅ Dataset Inspected
+   Hash: abc123...
+   Analysis: "4,987 tickets, 73% mention refunds"
+   Themes: shipping delays, product defects
+   Data: DELETED (not accessible)
+```
+
+### 3. API Key Verification (New)
+
+**Claim:** "I have valid API credentials"
+
+**Inspection:**
+- Load API key (secret)
+- Test with API call
+- Check rate limits/balance
+- Delete key
+
+**Certificate:**
+```
+✅ API Key Valid
+   Provider: Anthropic
+   Balance: $52.34
+   Rate limit: Good standing
+   Key value: NOT REVEALED
+```
+
+## Three Execution Backends
+
+### 1. Docker (Current)
+**Best for:** Skill verification, reproducible tests
 
 ```bash
 npm install
+npm start
+POST /verify { "skillUrl": "..." }
 ```
 
-### Start Server
+**Isolation:** Docker containers  
+**Trust:** Local Docker daemon  
+**Docs:** [DEMO.md](DEMO.md)
+
+### 2. GitHub Actions (New)
+**Best for:** Data inspection, public verifiability
 
 ```bash
-export DOCKER_HOST=tcp://your-docker-host:2375  # or use local Docker socket
+# One-time setup: Add secrets to repo
+# Run: Trigger workflow via UI or CLI
+```
+
+**Isolation:** GitHub runners  
+**Trust:** GitHub infrastructure  
+**Docs:** [Data Inspection Quick Start](docs/data-inspection/GITHUB-ACTIONS-QUICKSTART.md)
+
+### 3. dstack TEE (Future)
+**Best for:** High-stakes, regulatory compliance
+
+```bash
+dstack run --tee intel-tdx analyze.py
+```
+
+**Isolation:** Intel TDX hardware  
+**Trust:** CPU manufacturer  
+**Docs:** [TEE_READY.md](TEE_READY.md)
+
+## Documentation
+
+### Core Concept
+- **[INSPECTION-CERTIFICATES.md](INSPECTION-CERTIFICATES.md)** - Unifying concept
+- **[PLAN.md](PLAN.md)** - Original skill verifier plan
+
+### Skill Verification
+- **[DEMO.md](DEMO.md)** - Live verification example
+- **[PRODUCT_TOUR.md](PRODUCT_TOUR.md)** - Feature walkthrough
+- **[TEE_READY.md](TEE_READY.md)** - TEE integration
+
+### Data Inspection
+- **[AUDITOR-GUIDE.md](docs/data-inspection/AUDITOR-GUIDE.md)** - How to verify certificates
+- **[GITHUB-ACTIONS-QUICKSTART.md](docs/data-inspection/GITHUB-ACTIONS-QUICKSTART.md)** - 5-min demo
+- **[ARCHITECTURE-EPHEMERAL.md](docs/data-inspection/ARCHITECTURE-EPHEMERAL.md)** - Deep dive
+
+## API Design (Unified - Future)
+
+```typescript
+POST /inspect
+{
+  "type": "skill" | "data" | "credential",
+  "input": {
+    // For skills:
+    "skillUrl"?: "https://...",
+    
+    // For data:
+    "dataSecret"?: "PRIVATE_DATASET",
+    "prompt"?: "Analyze for X",
+    
+    // For credentials:
+    "credentialSecret"?: "API_KEY",
+    "testEndpoint"?: "/api/status"
+  },
+  "backend": "docker" | "github-actions" | "dstack-tee"
+}
+
+Response:
+{
+  "certificateId": "cert_xyz",
+  "result": { ... },
+  "proof": {
+    "attestation": "0x...",
+    "timestamp": "..."
+  },
+  "certificate_url": "/certificate/cert_xyz"
+}
+```
+
+## Installation
+
+### Skill Verification (Docker Backend)
+
+```bash
+npm install
+export DOCKER_HOST=tcp://your-docker-host:2375
 npm start
 ```
 
 Server runs on `http://localhost:3000`
 
-### Verify a Skill
+### Data Inspection (GitHub Actions Backend)
 
 ```bash
-# Submit for verification
-curl -X POST http://localhost:3000/verify \
-  -H "Content-Type: application/json" \
-  -d '{"skillPath": "/path/to/skill"}'
-
-# Response: {"jobId": "abc123...", "status": "pending", ...}
-
-# Check status
-curl http://localhost:3000/verify/abc123...
-
-# Get attestation
-curl http://localhost:3000/verify/abc123.../attestation
+# 1. Fork this repo
+# 2. Add GitHub Secrets (dataset, API keys)
+# 3. Run workflow from Actions tab
 ```
 
-## Skill Format
-
-Skills must include a `SKILL.md` file with YAML frontmatter:
-
-```markdown
----
-name: my-skill
-version: 1.0.0
-description: Does something cool
-runtime: node:20-alpine
-test_command: ["npm", "test"]
-test_deps: apk add --no-cache build-base
----
-
-# My Skill
-
-Documentation here...
-```
-
-### Required Fields
-
-- `name` - Skill identifier
-- `version` - Semantic version
-- `description` - Brief description
-
-### Optional Fields
-
-- `runtime` - Docker base image (default: `alpine:latest`)
-- `test_command` - Command to run tests (default: none)
-- `test_deps` - Shell command to install test dependencies
-
-## API Reference
-
-### POST /verify
-
-Submit a skill for verification.
-
-**Request:**
-```bash
-# With file upload
-curl -X POST http://localhost:3000/verify \
-  -F "skill=@skill.tar.gz"
-
-# With local path
-curl -X POST http://localhost:3000/verify \
-  -H "Content-Type: application/json" \
-  -d '{"skillPath": "/path/to/skill"}'
-```
-
-**Response:**
-```json
-{
-  "jobId": "abc123...",
-  "status": "pending",
-  "statusUrl": "/verify/abc123...",
-  "message": "Verification job created"
-}
-```
-
-### GET /verify/:jobId
-
-Get verification status and results.
-
-**Response:**
-```json
-{
-  "jobId": "abc123...",
-  "status": "completed",
-  "createdAt": "2026-01-30T18:00:00.000Z",
-  "startedAt": "2026-01-30T18:00:01.000Z",
-  "completedAt": "2026-01-30T18:00:05.000Z",
-  "result": {
-    "skillId": "my-skill@1.0.0",
-    "timestamp": "2026-01-30T18:00:05.000Z",
-    "duration": 4000,
-    "result": {
-      "passed": true,
-      "exitCode": 0,
-      "stdout": "All tests passed!\n",
-      "stderr": "",
-      "duration": 3500
-    },
-    "attestation": {
-      "quote": "0x...",
-      "resultHash": "abc123...",
-      "verifier": "skill-verifier/v0.1"
-    },
-    "manifest": {
-      "name": "my-skill",
-      "version": "1.0.0",
-      "description": "Does something cool"
-    }
-  }
-}
-```
-
-### GET /verify/:jobId/attestation
-
-Get attestation only.
-
-**Response:**
-```json
-{
-  "jobId": "abc123...",
-  "skillId": "my-skill@1.0.0",
-  "timestamp": "2026-01-30T18:00:05.000Z",
-  "passed": true,
-  "attestation": {
-    "quote": "0x...",
-    "resultHash": "abc123...",
-    "verifier": "skill-verifier/v0.1"
-  }
-}
-```
-
-### GET /jobs
-
-List all verification jobs.
-
-**Query Parameters:**
-- `status` - Filter by status (`pending`, `running`, `completed`, `failed`)
-- `limit` - Max results (default: 50)
-
-**Response:**
-```json
-{
-  "jobs": [
-    {
-      "id": "abc123...",
-      "status": "completed",
-      "createdAt": "2026-01-30T18:00:00.000Z",
-      "completedAt": "2026-01-30T18:00:05.000Z",
-      "skillId": "my-skill@1.0.0"
-    }
-  ],
-  "total": 42
-}
-```
-
-### DELETE /verify/:jobId
-
-Delete a verification job.
-
-### GET /health
-
-Server health check.
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-01-30T18:00:00.000Z",
-  "jobs": {
-    "total": 42,
-    "pending": 2,
-    "running": 1,
-    "completed": 38,
-    "failed": 1
-  }
-}
-```
-
-## CLI Usage
-
-You can also use the verifier directly from the command line:
-
-```bash
-node verifier.js /path/to/skill
-```
-
-Results are saved to `work/skillname@version.json`.
-
-## Architecture
-
-```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │ HTTP POST /verify
-       ▼
-┌─────────────┐
-│  API Server │ (Express)
-└──────┬──────┘
-       │ Create Job
-       ▼
-┌─────────────┐
-│  Job Queue  │ (In-memory)
-└──────┬──────┘
-       │ Run Async
-       ▼
-┌─────────────┐
-│  Verifier   │ (Node.js)
-└──────┬──────┘
-       │ Build & Run
-       ▼
-┌─────────────┐
-│   Docker    │ (Isolated Container)
-│   ┌─────┐   │
-│   │Skill│   │
-│   └─────┘   │
-└──────┬──────┘
-       │ Results
-       ▼
-┌─────────────┐
-│ Attestation │ (Cryptographic Proof)
-└─────────────┘
-```
+See [Quick Start Guide](docs/data-inspection/GITHUB-ACTIONS-QUICKSTART.md)
 
 ## Examples
 
-See `/examples` for complete skill examples:
-- `examples/hello-world` - Minimal passing skill
-- `examples/node-app` - Node.js app with tests
-- `examples/python-script` - Python with dependencies
-
-## Development
-
-### Run in Dev Mode
+### Skill Verification
 
 ```bash
-npm run dev  # Auto-restart on changes
+curl -X POST http://localhost:3000/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "skillUrl": "https://raw.githubusercontent.com/user/repo/main/skill.md"
+  }'
 ```
 
-### Environment Variables
+Response:
+```json
+{
+  "verificationId": "ver_abc123",
+  "skillName": "hermes",
+  "status": "verified",
+  "tests": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0
+  },
+  "attestation": "0xfb41b44...",
+  "certificateUrl": "/verification/ver_abc123"
+}
+```
 
-- `PORT` - Server port (default: 3000)
-- `DOCKER_HOST` - Docker daemon address (e.g., `tcp://host:2375`)
+### Data Inspection
 
-## Roadmap
+```bash
+gh workflow run inspect-data.yml \
+  -f dataset_secret="SUPPORT_TICKETS" \
+  -f prompt="Count tickets mentioning 'refund'. List common themes."
+```
 
-- [ ] Real TEE attestations via dstack SDK
-- [ ] Persistent job queue (Redis/SQLite)
-- [ ] Webhook notifications
-- [ ] Rate limiting
-- [ ] Result caching
-- [ ] Multi-step verification workflows
-- [ ] Network isolation controls
-- [ ] Resource limits (CPU/memory)
+Certificate: `https://github.com/user/repo/actions/runs/12345`
+
+## Why "Inspection Certificates"?
+
+**Traditional approach:**
+- "Trust me, this skill works"
+- "Trust me, my data is valuable"
+
+**Inspection Certificates:**
+- Verifiable proof the computation happened
+- Public logs anyone can audit
+- Ephemeral (no data storage risk)
+- Scalable (skills, data, credentials)
+
+**Use cases:**
+- Agent skill marketplaces (prove skills work)
+- Data marketplaces (prove value before purchase)
+- API key verification (prove credentials valid)
+- Research validation (prove results without exposing test data)
+
+## Repository Structure
+
+```
+skill-verifier/
+├── INSPECTION-CERTIFICATES.md  # Core concept
+├── README.md                     # This file
+│
+├── DEMO.md                       # Skill verification demo
+├── PLAN.md                       # Original plan
+├── TEE_READY.md                  # TEE integration
+│
+├── docs/
+│   └── data-inspection/
+│       ├── AUDITOR-GUIDE.md               # How to verify
+│       ├── GITHUB-ACTIONS-QUICKSTART.md   # 5-min start
+│       └── ARCHITECTURE-EPHEMERAL.md      # Deep dive
+│
+├── .github/
+│   └── workflows/
+│       └── docker-publish.yml    # Skill verification CI
+│
+├── .github-data-inspection/
+│   └── workflows/
+│       └── ephemeral-execution.yml  # Data inspection workflow
+│
+├── examples/
+│   ├── hermes-verified/          # Verified skill example
+│   ├── hello-world/              # Minimal example
+│   ├── node-app/                 # Node.js example
+│   └── python-script/            # Python example
+│
+└── src/                          # Skill verifier server (TODO)
+```
+
+## Next Steps
+
+**For Skill Verification:**
+1. Read [DEMO.md](DEMO.md)
+2. Try verifying a skill
+3. Deploy to dstack ([TEE_READY.md](TEE_READY.md))
+
+**For Data Inspection:**
+1. Read [Quick Start](docs/data-inspection/GITHUB-ACTIONS-QUICKSTART.md)
+2. Set up GitHub Actions workflow
+3. Run first inspection
+
+**For Integration:**
+- See [INSPECTION-CERTIFICATES.md](INSPECTION-CERTIFICATES.md)
+- Unified API coming in Phase 2
+
+## Contributing
+
+This repo unifies two related concepts:
+- **Skill verification** (original)
+- **Data inspection** (new)
+
+Both follow the same pattern: ephemeral execution with permanent certificates.
 
 ## License
 
 MIT
 
-## Contributing
+---
 
-Contributions welcome! This is an early prototype.
+**Inspection Certificates: Verifiable proof without permanent storage** 🦞🔐
