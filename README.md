@@ -53,6 +53,17 @@ Like a pre-buy inspection:
 - Tamper-proof logs
 - Cryptographic attestation (TEE mode)
 
+**Escrow = Automated payment release**
+
+The inspection service can act as an escrow agent:
+- Buyer locks payment in TEE-controlled wallet (via KMS)
+- Seller delivers work (skill, dataset, etc.)
+- TEE verifies delivery (ephemeral execution)
+- If verification passes → KMS releases payment
+- Both parties get inspection certificate
+
+📖 **[Escrow Agent Model](ESCROW-AGENT.md)**
+
 ## Use Cases
 
 ### 1. Skill Verification (Original)
@@ -153,6 +164,7 @@ dstack run --tee intel-tdx analyze.py
 
 ### Core Concept
 - **[INSPECTION-CERTIFICATES.md](INSPECTION-CERTIFICATES.md)** - Unifying concept
+- **[ESCROW-AGENT.md](ESCROW-AGENT.md)** - Automated escrow via TEE + KMS
 - **[PLAN.md](PLAN.md)** - Original skill verifier plan
 
 ### Skill Verification
