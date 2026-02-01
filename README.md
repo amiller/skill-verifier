@@ -11,6 +11,18 @@ Both use the same ephemeral execution model: load input → run computation → 
 
 ## Quick Start
 
+### 🎯 Try Live Examples First!
+
+**3 engaging examples you can run RIGHT NOW:**
+
+1. **[API Key Verification](examples/live-demos)** - Prove key is valid without revealing it
+2. **[Dataset Pre-Buy Inspection](examples/live-demos)** - Verify data before purchase
+3. **[TLS Transcript Verification](examples/live-demos)** - Prove data provenance
+
+Just fork the repo, add GitHub Secrets, and run the workflows!
+
+📖 **[Live Examples →](examples/live-demos/README.md)**
+
 ### Skill Verification (Docker)
 ```bash
 # Verify a skill works
@@ -165,6 +177,7 @@ dstack run --tee intel-tdx analyze.py
 ### Core Concept
 - **[INSPECTION-CERTIFICATES.md](INSPECTION-CERTIFICATES.md)** - Unifying concept
 - **[ESCROW-AGENT.md](ESCROW-AGENT.md)** - Automated escrow via TEE + KMS
+- **[ROADMAP.md](ROADMAP.md)** - Detailed development roadmap
 - **[PLAN.md](PLAN.md)** - Original skill verifier plan
 
 ### Skill Verification
